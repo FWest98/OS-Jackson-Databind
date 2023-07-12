@@ -1,14 +1,5 @@
 package com.fasterxml.jackson.databind.type;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.BaseStream;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
-import java.lang.reflect.*;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +7,11 @@ import com.fasterxml.jackson.databind.util.ArrayBuilders;
 import com.fasterxml.jackson.databind.util.ClassUtil;
 import com.fasterxml.jackson.databind.util.LRUMap;
 import com.fasterxml.jackson.databind.util.LookupCache;
+
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.*;
 
 /**
  * Class used for creating concrete {@link JavaType} instances,
@@ -1751,8 +1747,15 @@ ClassUtil.nameOf(rawClass), pc, (pc == 1) ? "" : "s", bindings));
         /* Similar to challenges with TypeVariable, we may have multiple upper bounds.
          * But it is also possible that if upper bound defaults to Object, we might
          * want to consider lower bounds instead.
-         * For now, we won't try anything more advanced; above is just for future reference.
+         *
+         * For now, we use the approach to always try and find the most-specified type.
+         * This means that when there is a lower bound, we choose it, and otherwise we
+         * use the first upper bound.
          */
-        return _fromAny(context, type.getUpperBounds()[0], bindings);
+        if(type.getLowerBounds().length > 0) {
+            return _fromAny(context, type.getLowerBounds()[0], bindings);
+        } else {
+            return _fromAny(context, type.getUpperBounds()[0], bindings);
+        }
     }
 }
